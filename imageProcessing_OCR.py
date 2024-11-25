@@ -16,11 +16,30 @@ import matplotlib.pyplot as plt
 from PIL import ImageFont, ImageDraw, Image
 from google.colab import files
 
-#src is gray scale of image
-image_path = cv2.imread('/content/손글씨.jpeg')
-image = cv2.imread('/content/손글씨.jpeg')
-# 전처리: 그레이스케일 변환 (Optional)
-src = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# 파일 업로드
+print("이미지를 업로드하세요.")
+uploaded = files.upload()
+
+# 업로드된 파일의 이름 가져오기
+image_path = list(uploaded.keys())[0]
+print(f"업로드된 파일 이름: {image_path}")
+
+# 이미지 읽기
+image = cv2.imdecode(np.frombuffer(uploaded[image_path], np.uint8), cv2.IMREAD_COLOR)
+
+# 이미지 확인 및 처리
+if image is None:
+    print("이미지를 불러올 수 없습니다. 업로드한 파일을 확인하세요.")
+else:
+    print("이미지 로드 성공!")
+    # 그레이스케일 변환
+    src = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    print("Grayscale 변환 완료")
+
+    # 처리 결과 출력 (이미지 보기 위해 저장)
+    output_path = "/content/processed_image.png"
+    cv2.imwrite(output_path, src)
+    print(f"처리된 이미지를 저장했습니다: {output_path}")
 
 reader = easyocr.Reader(['en', 'ko'])
 result =  reader.readtext(image)
@@ -45,7 +64,7 @@ for detection in result:
     x_max, y_max = map(int, coords[2])
 
     # 경계 상자 그리기
-    draw.rectangle(((x_min, y_min), (x_max, y_max)), outline="skyblue", width=2)
+    draw.rectangle(((x_min, y_min), (x_max, y_max)), outline="red", width=2)
 
     # 텍스트 추가
     draw.text((x_min, y_min - 20), text, font=font, fill="black")
@@ -56,3 +75,13 @@ plt.imshow(np.asarray(image_pil))
 plt.axis('off')
 plt.show()
 
+# EasyOCR로 텍스트 인식
+result = reader.readtext(image)
+
+# 추출된 텍스트 출력
+print("추출된 텍스트:")
+extracted_text = []
+for detection in result:
+    text = detection[1]  # 추출된 텍스트
+    extracted_text.append(text)
+    print(text)  # 추출된 텍스트 출력
